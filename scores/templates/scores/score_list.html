@@ -1,0 +1,885 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>スコア一覧</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@700&family=Oswald:wght@700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            background-color: #FFFFFF;
+            color: #000000;
+            margin: 0;
+        }
+        table {
+            margin: 20px auto;
+            border-collapse: collapse;
+            font-size: 20px;
+            display: none;
+        }
+        table.active {
+            display: table;
+        }
+        #male-a-table, #male-b-table, #male-all-table, #female-a-table, #female-b-table, #female-all-table {
+            width: clamp(600px, 80vw, 1200px);
+            max-width: 100%;
+            overflow-x: auto;
+        }
+        th, td {
+            border: 1px solid #999;
+            padding: clamp(4px, 1vw, 12px);
+            text-align: center;
+        }
+        th {
+            background-color: #D3D3D3;
+            color: #000000;
+        }
+        th.header-place {
+            font-size: calc(0.5vw + 1rem);
+            font-family: 'Roboto', sans-serif;
+        }
+        th.header-face {
+            font-size: calc(0.5vw + 1rem);
+            font-family: 'Roboto', sans-serif;
+        }
+        th.header-name {
+            font-size: calc(0.5vw + 1rem);
+            font-family: 'Roboto', sans-serif;
+        }
+        th.header-total {
+            font-size: calc(0.5vw + 1rem);
+            font-family: 'Roboto', sans-serif;
+        }
+        td.face-column {
+            width: clamp(160px, 6vw, 100px);
+            height: clamp(140px, 12vw, 130px);
+            min-width: 100px;
+            min-height: 100px;
+            max-width: 120px;
+            max-height: 140px;
+        }
+        img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+        .top-8 td {
+            background-color: #003399 !important; /* 水色 */
+            color: #FFFFFF !important; /* 白文字 */
+        }
+        .mid-rank td {
+            background-color: #0066CC !important; /* 紺色 */
+            color: #FFFFFF !important; /* 白文字 */
+        }
+        .low-rank td {
+            background-color: #F0F8FF !important; /* 薄い青 */
+        }
+        td.name-column {
+            font-weight: 900;
+            font-size: clamp(40px, 2.75vw, 5.0rem);
+            font-family: 'Oswald', sans-serif;
+            letter-spacing: 1px;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.2);
+            white-space: nowrap;
+        }
+        .small-name {
+            font-size: clamp(30px, 2vw, 4rem);
+        }
+        td.rank-column {
+            font-weight: 700;
+            font-size: clamp(40px, 3vw, 2.5rem);
+            width: clamp(60px, 8vw, 120px);
+            max-width: 120px;
+            font-family: 'Roboto', sans-serif;
+            color: #FFCC00; /* デフォルトは黄色 */
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        /* 1～8位の順位文字を濃い黄色＋濃い影 */
+        .top-8 td.rank-column {
+            color: #FFCC00 !important; /* オレンジ寄りの濃い黄色 */
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.6); /* 影を濃く */
+        }
+        /* 46位以下（男子）/ 31位以下（女子）の順位文字を黒に */
+        .low-rank td.rank-column {
+            color: #000000; /* 黒文字 */
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3); /* 影はそのまま */
+        }
+        td.total-column {
+            font-size: calc(1.5vw + 0.5rem);
+            font-family: 'Roboto', sans-serif;
+        }
+        .small-text {
+            font-size: 70%;
+        }
+        .diff-text {
+            font-size: 50%;
+            color: #FFC800;
+            display: block;
+            margin-top: 2px;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3); /* デフォルトの影 */
+        }
+        /* 1～8位のトップとの差の影を濃く */
+        .top-8 td .diff-text {
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.6); /* 影を濃く */
+        }
+        .semi-diff-text {
+            font-size: 50%;
+            color: #666 !important;
+            display: block;
+            margin-top: 2px;
+        }
+        .shift-text {
+            font-size: 70%;
+            color: #333;
+            margin-left: 4px;
+        }
+        .plus-minus {
+            font-size: 60%;
+            border: 1px solid #333;
+            padding: 2px 4px;
+            margin-left: 4px;
+            display: inline-block;
+        }
+        .game-row {
+            display: none;
+        }
+        .game-row.active {
+            display: table-row;
+            height: auto;
+            animation: slideDown 0.3s ease forwards;
+        }
+        @keyframes slideDown {
+            from {
+                height: 0;
+                opacity: 0;
+            }
+            to {
+                height: auto;
+                opacity: 1;
+            }
+        }
+        .inner-table {
+            width: 100%;
+            min-width: 560px;
+            overflow-x: auto;
+            display: block;
+            margin-left: auto;
+            margin-right: auto;
+            max-width: fit-content;
+        }
+        .inner-table td {
+            padding: clamp(4px, 1vw, 8px);
+            border: 1px solid #999;
+            font-size: clamp(12px, 2vw, 20px);
+            box-sizing: border-box;
+            min-width: 40px;
+        }
+        .inner-table .game-label {
+            font-size: clamp(8px, 1.2vw, 12px);
+            background-color: #E6E6FA;
+        }
+        .high-low-diff {
+            color: #0033FF;
+            font-weight: bold;
+        }
+        .banner {
+           background-color: #003399;
+           color: #FFFFFF;
+           padding: 20px 0;
+           text-align: center;
+           width: 100%;
+           margin-bottom: 20px;
+        }
+        .banner .game-status {
+            color: #FFCC00; /* 黄色文字 */
+        }
+        h2 {
+            font-size: clamp(20px, 4vw, 3rem);
+            font-family: 'Oswald', sans-serif;
+            margin: 10px 0;
+        }
+        h3 {
+            font-size: clamp(16px, 2vw, 1.5rem);
+            font-family: 'Oswald', sans-serif;
+            margin: 5px 0;
+        }
+        .tab-buttons {
+            text-align: center;
+            margin: 10px 0;
+        }
+        .tab-button {
+            background-color: #E6E6FA;
+            color: #000000;
+            border: 1px solid #999;
+            padding: 16px 32px;
+            margin: 0 5px;
+            cursor: pointer;
+            font-family: 'Roboto', sans-serif;
+            font-size: 100%;
+        }
+        .tab-button.active {
+            background-color: #87CEEB;
+            border-color: #FFCC00;
+            color: #000000;
+        }
+        .score-low {
+            color: #666;
+        }
+        .score-normal {
+            color: #000000;
+        }
+        .score-perfect {
+            color: #FF4500;
+        }
+        .final-buttons {
+            text-align: center;
+            margin: 10px 0; /* タブボタンとの間隔 */
+        }
+    </style>
+</head>
+<body>
+    <div class="banner">
+        <a href="http://www.bpah.or.jp/news/open/entry-124.html"><img src="https://bowlstar.jp/wp-content/uploads/2025/04/25HOP-1.jpg" alt="TOP"></a>
+        <h2>第30回中国新聞杯広島オープン</h2>
+        <h2>ボウリングトーナメント</h2>
+        <h2>
+            {% if current_game > 0 %}
+            <span class="game-status">{{ current_game }}ゲーム目時点速報</span>
+            {% else %}
+                速報準備中
+            {% endif %}
+        </h2>
+    </div>
+
+    <div class="tab-buttons">
+        <button class="tab-button" data-tab="male-a">男子A</button>
+        <button class="tab-button" data-tab="male-b">男子B</button>
+        <button class="tab-button active" data-tab="male-all">男子合算</button>
+        <button class="tab-button" data-tab="female-a">女子A</button>
+        <button class="tab-button" data-tab="female-b">女子B</button>
+        <button class="tab-button" data-tab="female-all">女子合算</button>
+    </div>
+    <br>
+    <div class="final-buttons">
+    <a href="{% url 'mens_final' %}" class="tab-button">男子決勝</a>
+    <a href="{% url 'womens_final' %}" class="tab-button">女子決勝</a>
+</div>
+    <br>
+
+    <!-- 男子A -->
+    <table id="male-a-table">
+        <tr>
+            <th class="header-place">PLACE</th>
+            <th class="header-face">FACE</th>
+            <th class="header-name">NAME</th>
+            <th class="header-total">TOTAL</th>
+        </tr>
+        {% for score in male_a_scores %}
+            {% if forloop.counter <= 8 %}
+                <tr class="top-8 main-row" data-id="male-a-{{ forloop.counter }}">
+            {% elif forloop.counter <= 45 %}
+                <tr class="mid-rank main-row" data-id="male-a-{{ forloop.counter }}">
+            {% else %}
+                <tr class="low-rank main-row" data-id="male-a-{{ forloop.counter }}">
+            {% endif %}
+                <td class="rank-column">{{ forloop.counter }}<span class="small-text">位</span></td>
+                <td class="face-column">
+                    <img src="/media/photos/default_avatar.png" alt="デフォルトアバター">
+                </td>
+                <td class="name-column {% if score.obj.name|length >= 5 %}small-name{% endif %}">
+                    {{ score.obj.name }}
+                    {% if score.obj.license_no|slice:":1" == "M" %}
+                        <span class="small-text">プロ</span><span class="shift-text">({{ score.obj.shift }})</span>
+                    {% endif %}
+                </td>
+                <td class="total-column">
+                    {{ score.obj.total }}<span class="small-text">pin</span>
+                    <span class="plus-minus">
+                        {% if score.diff >= 0 %}+{% endif %}{{ score.diff }}
+                    </span>
+                </td>
+            </tr>
+            <tr class="game-row" id="games-male-a-{{ forloop.counter }}">
+                <td colspan="4">
+                    <table class="inner-table">
+                        <tr>
+                            <td class="game-label">G1</td><td class="game-label">G2</td><td class="game-label">G3</td>
+                            <td class="game-label">G4</td><td class="game-label">G5</td><td class="game-label">G6</td>
+                            <td class="game-label">G7</td><td class="game-label">G8</td><td class="game-label">G9</td>
+                            <td class="game-label">G10</td><td class="game-label">G11</td><td class="game-label">G12</td>
+                            <td class="game-label">ローハイ</td>
+                        </tr>
+                        <tr>
+                            <td class="{% if score.obj.game1 == 300 %}score-perfect{% elif score.obj.game1 >= 200 %}score-normal{% else %}score-low{% endif %}">
+                                {{ score.obj.game1|default:'' }}
+                            </td>
+                            <td class="{% if score.obj.game2 == 300 %}score-perfect{% elif score.obj.game2 >= 200 %}score-normal{% else %}score-low{% endif %}">
+                                {{ score.obj.game2|default:'' }}
+                            </td>
+                            <td class="{% if score.obj.game3 == 300 %}score-perfect{% elif score.obj.game3 >= 200 %}score-normal{% else %}score-low{% endif %}">
+                                {{ score.obj.game3|default:'' }}
+                            </td>
+                            <td class="{% if score.obj.game4 == 300 %}score-perfect{% elif score.obj.game4 >= 200 %}score-normal{% else %}score-low{% endif %}">
+                                {{ score.obj.game4|default:'' }}
+                            </td>
+                            <td class="{% if score.obj.game5 == 300 %}score-perfect{% elif score.obj.game5 >= 200 %}score-normal{% else %}score-low{% endif %}">
+                                {{ score.obj.game5|default:'' }}
+                            </td>
+                            <td class="{% if score.obj.game6 == 300 %}score-perfect{% elif score.obj.game6 >= 200 %}score-normal{% else %}score-low{% endif %}">
+                                {{ score.obj.game6|default:'' }}
+                            </td>
+                            <td class="{% if score.obj.game7 == 300 %}score-perfect{% elif score.obj.game7 >= 200 %}score-normal{% else %}score-low{% endif %}">
+                                {{ score.obj.game7|default:'' }}
+                            </td>
+                            <td class="{% if score.obj.game8 == 300 %}score-perfect{% elif score.obj.game8 >= 200 %}score-normal{% else %}score-low{% endif %}">
+                                {{ score.obj.game8|default:'' }}
+                            </td>
+                            <td class="{% if score.obj.game9 == 300 %}score-perfect{% elif score.obj.game9 >= 200 %}score-normal{% else %}score-low{% endif %}">
+                                {{ score.obj.game9|default:'' }}
+                            </td>
+                            <td class="{% if score.obj.game10 == 300 %}score-perfect{% elif score.obj.game10 >= 200 %}score-normal{% else %}score-low{% endif %}">
+                                {{ score.obj.game10|default:'' }}
+                            </td>
+                            <td class="{% if score.obj.game11 == 300 %}score-perfect{% elif score.obj.game11 >= 200 %}score-normal{% else %}score-low{% endif %}">
+                                {{ score.obj.game11|default:'' }}
+                            </td>
+                            <td class="{% if score.obj.game12 == 300 %}score-perfect{% elif score.obj.game12 >= 200 %}score-normal{% else %}score-low{% endif %}">
+                                {{ score.obj.game12|default:'' }}
+                            </td>
+                            <td class="high-low-diff">
+                                {% if score.obj.game_high_low_diff is not None %}
+                                    {{ score.obj.game_high_low_diff }}
+                                {% else %}
+                                    -
+                                {% endif %}
+                            </td>
+                        </tr>
+                    </table>
+                </td>
+            </tr>
+        {% endfor %}
+    </table>
+
+    <!-- 男子B -->
+    <table id="male-b-table">
+        <tr>
+            <th class="header-place">PLACE</th>
+            <th class="header-face">FACE</th>
+            <th class="header-name">NAME</th>
+            <th class="header-total">TOTAL</th>
+        </tr>
+        {% for score in male_b_scores %}
+            {% if forloop.counter <= 8 %}
+                <tr class="top-8 main-row" data-id="male-b-{{ forloop.counter }}">
+            {% elif forloop.counter <= 45 %}
+                <tr class="mid-rank main-row" data-id="male-b-{{ forloop.counter }}">
+            {% else %}
+                <tr class="low-rank main-row" data-id="male-b-{{ forloop.counter }}">
+            {% endif %}
+                <td class="rank-column">{{ forloop.counter }}<span class="small-text">位</span></td>
+                <td class="face-column">
+                    <img src="/media/photos/default_avatar.png" alt="デフォルトアバター">
+                </td>
+                <td class="name-column {% if score.obj.name|length >= 5 %}small-name{% endif %}">
+                    {{ score.obj.name }}
+                    {% if score.obj.license_no|slice:":1" == "M" %}
+                        <span class="small-text">プロ</span><span class="shift-text">({{ score.obj.shift }})</span>
+                    {% endif %}
+                </td>
+                <td class="total-column">
+                    {{ score.obj.total }}<span class="small-text">pin</span>
+                    <span class="plus-minus">
+                        {% if score.diff >= 0 %}+{% endif %}{{ score.diff }}
+                    </span>
+                </td>
+            </tr>
+            <tr class="game-row" id="games-male-b-{{ forloop.counter }}">
+                <td colspan="4">
+                    <table class="inner-table">
+                        <tr>
+                            <td class="game-label">G1</td><td class="game-label">G2</td><td class="game-label">G3</td>
+                            <td class="game-label">G4</td><td class="game-label">G5</td><td class="game-label">G6</td>
+                            <td class="game-label">G7</td><td class="game-label">G8</td><td class="game-label">G9</td>
+                            <td class="game-label">G10</td><td class="game-label">G11</td><td class="game-label">G12</td>
+                            <td class="game-label">ローハイ</td>
+                        </tr>
+                        <tr>
+                            <td class="{% if score.obj.game1 == 300 %}score-perfect{% elif score.obj.game1 >= 200 %}score-normal{% else %}score-low{% endif %}">
+                                {{ score.obj.game1|default:'' }}
+                            </td>
+                            <td class="{% if score.obj.game2 == 300 %}score-perfect{% elif score.obj.game2 >= 200 %}score-normal{% else %}score-low{% endif %}">
+                                {{ score.obj.game2|default:'' }}
+                            </td>
+                            <td class="{% if score.obj.game3 == 300 %}score-perfect{% elif score.obj.game3 >= 200 %}score-normal{% else %}score-low{% endif %}">
+                                {{ score.obj.game3|default:'' }}
+                            </td>
+                            <td class="{% if score.obj.game4 == 300 %}score-perfect{% elif score.obj.game4 >= 200 %}score-normal{% else %}score-low{% endif %}">
+                                {{ score.obj.game4|default:'' }}
+                            </td>
+                            <td class="{% if score.obj.game5 == 300 %}score-perfect{% elif score.obj.game5 >= 200 %}score-normal{% else %}score-low{% endif %}">
+                                {{ score.obj.game5|default:'' }}
+                            </td>
+                            <td class="{% if score.obj.game6 == 300 %}score-perfect{% elif score.obj.game6 >= 200 %}score-normal{% else %}score-low{% endif %}">
+                                {{ score.obj.game6|default:'' }}
+                            </td>
+                            <td class="{% if score.obj.game7 == 300 %}score-perfect{% elif score.obj.game7 >= 200 %}score-normal{% else %}score-low{% endif %}">
+                                {{ score.obj.game7|default:'' }}
+                            </td>
+                            <td class="{% if score.obj.game8 == 300 %}score-perfect{% elif score.obj.game8 >= 200 %}score-normal{% else %}score-low{% endif %}">
+                                {{ score.obj.game8|default:'' }}
+                            </td>
+                            <td class="{% if score.obj.game9 == 300 %}score-perfect{% elif score.obj.game9 >= 200 %}score-normal{% else %}score-low{% endif %}">
+                                {{ score.obj.game9|default:'' }}
+                            </td>
+                            <td class="{% if score.obj.game10 == 300 %}score-perfect{% elif score.obj.game10 >= 200 %}score-normal{% else %}score-low{% endif %}">
+                                {{ score.obj.game10|default:'' }}
+                            </td>
+                            <td class="{% if score.obj.game11 == 300 %}score-perfect{% elif score.obj.game11 >= 200 %}score-normal{% else %}score-low{% endif %}">
+                                {{ score.obj.game11|default:'' }}
+                            </td>
+                            <td class="{% if score.obj.game12 == 300 %}score-perfect{% elif score.obj.game12 >= 200 %}score-normal{% else %}score-low{% endif %}">
+                                {{ score.obj.game12|default:'' }}
+                            </td>
+                            <td class="high-low-diff">
+                                {% if score.obj.game_high_low_diff is not None %}
+                                    {{ score.obj.game_high_low_diff }}
+                                {% else %}
+                                    -
+                                {% endif %}
+                            </td>
+                        </tr>
+                    </table>
+                </td>
+            </tr>
+        {% endfor %}
+    </table>
+
+    <!-- 男子合算 -->
+    <table id="male-all-table" class="active">
+        <tr>
+            <th class="header-place">PLACE</th>
+            <th class="header-face">FACE</th>
+            <th class="header-name">NAME</th>
+            <th class="header-total">TOTAL</th>
+        </tr>
+        {% for score in male_all_scores %}
+            {% if forloop.counter <= 8 %}
+                <tr class="top-8 main-row" data-id="male-all-{{ forloop.counter }}">
+            {% elif forloop.counter <= 45 %}
+                <tr class="mid-rank main-row" data-id="male-all-{{ forloop.counter }}">
+            {% else %}
+                <tr class="low-rank main-row" data-id="male-all-{{ forloop.counter }}">
+            {% endif %}
+                <td class="rank-column">{{ forloop.counter }}<span class="small-text">位</span></td>
+                <td class="face-column">
+                    <img src="/media/photos/default_avatar.png" alt="デフォルトアバター">
+                </td>
+                <td class="name-column {% if score.obj.name|length >= 5 %}small-name{% endif %}">
+                    {{ score.obj.name }}
+                    {% if score.obj.license_no|slice:":1" == "M" %}
+                        <span class="small-text">プロ</span><span class="shift-text">({{ score.obj.shift }})</span>
+                    {% endif %}
+                    {% if forloop.counter >= 2 and forloop.counter <= 8 %}
+                        <span class="diff-text">トップとの差 {{ score.top_diff }}pin</span>
+                    {% elif forloop.counter >= 9 and forloop.counter <= 45 %}
+                        <span class="diff-text">決勝ボーダーとの差 {{ score.final_border_diff }}pin</span>
+                    {% elif forloop.counter > 45 %}
+                        <span class="semi-diff-text">準決ボーダーとの差 {{ score.semi_border_diff }}pin</span>
+                    {% endif %}
+                </td>
+                <td class="total-column">
+                    {{ score.obj.total }}<span class="small-text">pin</span>
+                    <span class="plus-minus">
+                        {% if score.diff >= 0 %}+{% endif %}{{ score.diff }}
+                    </span>
+                </td>
+            </tr>
+            <tr class="game-row" id="games-male-all-{{ forloop.counter }}">
+                <td colspan="4">
+                    <table class="inner-table">
+                        <tr>
+                            <td class="game-label">G1</td><td class="game-label">G2</td><td class="game-label">G3</td>
+                            <td class="game-label">G4</td><td class="game-label">G5</td><td class="game-label">G6</td>
+                            <td class="game-label">G7</td><td class="game-label">G8</td><td class="game-label">G9</td>
+                            <td class="game-label">G10</td><td class="game-label">G11</td><td class="game-label">G12</td>
+                            <td class="game-label">ローハイ</td>
+                        </tr>
+                        <tr>
+                            <td class="{% if score.obj.game1 == 300 %}score-perfect{% elif score.obj.game1 >= 200 %}score-normal{% else %}score-low{% endif %}">
+                                {{ score.obj.game1|default:'' }}
+                            </td>
+                            <td class="{% if score.obj.game2 == 300 %}score-perfect{% elif score.obj.game2 >= 200 %}score-normal{% else %}score-low{% endif %}">
+                                {{ score.obj.game2|default:'' }}
+                            </td>
+                            <td class="{% if score.obj.game3 == 300 %}score-perfect{% elif score.obj.game3 >= 200 %}score-normal{% else %}score-low{% endif %}">
+                                {{ score.obj.game3|default:'' }}
+                            </td>
+                            <td class="{% if score.obj.game4 == 300 %}score-perfect{% elif score.obj.game4 >= 200 %}score-normal{% else %}score-low{% endif %}">
+                                {{ score.obj.game4|default:'' }}
+                            </td>
+                            <td class="{% if score.obj.game5 == 300 %}score-perfect{% elif score.obj.game5 >= 200 %}score-normal{% else %}score-low{% endif %}">
+                                {{ score.obj.game5|default:'' }}
+                            </td>
+                            <td class="{% if score.obj.game6 == 300 %}score-perfect{% elif score.obj.game6 >= 200 %}score-normal{% else %}score-low{% endif %}">
+                                {{ score.obj.game6|default:'' }}
+                            </td>
+                            <td class="{% if score.obj.game7 == 300 %}score-perfect{% elif score.obj.game7 >= 200 %}score-normal{% else %}score-low{% endif %}">
+                                {{ score.obj.game7|default:'' }}
+                            </td>
+                            <td class="{% if score.obj.game8 == 300 %}score-perfect{% elif score.obj.game8 >= 200 %}score-normal{% else %}score-low{% endif %}">
+                                {{ score.obj.game8|default:'' }}
+                            </td>
+                            <td class="{% if score.obj.game9 == 300 %}score-perfect{% elif score.obj.game9 >= 200 %}score-normal{% else %}score-low{% endif %}">
+                                {{ score.obj.game9|default:'' }}
+                            </td>
+                            <td class="{% if score.obj.game10 == 300 %}score-perfect{% elif score.obj.game10 >= 200 %}score-normal{% else %}score-low{% endif %}">
+                                {{ score.obj.game10|default:'' }}
+                            </td>
+                            <td class="{% if score.obj.game11 == 300 %}score-perfect{% elif score.obj.game11 >= 200 %}score-normal{% else %}score-low{% endif %}">
+                                {{ score.obj.game11|default:'' }}
+                            </td>
+                            <td class="{% if score.obj.game12 == 300 %}score-perfect{% elif score.obj.game12 >= 200 %}score-normal{% else %}score-low{% endif %}">
+                                {{ score.obj.game12|default:'' }}
+                            </td>
+                            <td class="high-low-diff">
+                                {% if score.obj.game_high_low_diff is not None %}
+                                    {{ score.obj.game_high_low_diff }}
+                                {% else %}
+                                    -
+                                {% endif %}
+                            </td>
+                        </tr>
+                    </table>
+                </td>
+            </tr>
+        {% endfor %}
+    </table>
+
+    <!-- 女子A -->
+    <table id="female-a-table">
+        <tr>
+            <th class="header-place">PLACE</th>
+            <th class="header-face">FACE</th>
+            <th class="header-name">NAME</th>
+            <th class="header-total">TOTAL</th>
+        </tr>
+        {% for score in female_a_scores %}
+            {% if forloop.counter <= 8 %}
+                <tr class="top-8 main-row" data-id="female-a-{{ forloop.counter }}">
+            {% elif forloop.counter <= 30 %}
+                <tr class="mid-rank main-row" data-id="female-a-{{ forloop.counter }}">
+            {% else %}
+                <tr class="low-rank main-row" data-id="female-a-{{ forloop.counter }}">
+            {% endif %}
+                <td class="rank-column">{{ forloop.counter }}<span class="small-text">位</span></td>
+                <td class="face-column">
+                    <img src="/media/photos/default_avatar.png" alt="デフォルトアバター">
+                </td>
+                <td class="name-column {% if score.obj.name|length >= 5 %}small-name{% endif %}">
+                    {{ score.obj.name }}
+                    {% if score.obj.license_no|slice:":1" == "F" %}
+                        <span class="small-text">プロ</span><span class="shift-text">({{ score.obj.shift }})</span>
+                    {% endif %}
+                </td>
+                <td class="total-column">
+                    {{ score.obj.total }}<span class="small-text">pin</span>
+                    <span class="plus-minus">
+                        {% if score.diff >= 0 %}+{% endif %}{{ score.diff }}
+                    </span>
+                </td>
+            </tr>
+            <tr class="game-row" id="games-female-a-{{ forloop.counter }}">
+                <td colspan="4">
+                    <table class="inner-table">
+                        <tr>
+                            <td class="game-label">G1</td><td class="game-label">G2</td><td class="game-label">G3</td>
+                            <td class="game-label">G4</td><td class="game-label">G5</td><td class="game-label">G6</td>
+                            <td class="game-label">G7</td><td class="game-label">G8</td><td class="game-label">G9</td>
+                            <td class="game-label">G10</td><td class="game-label">G11</td><td class="game-label">G12</td>
+                            <td class="game-label">ローハイ</td>
+                        </tr>
+                        <tr>
+                            <td class="{% if score.obj.game1 == 300 %}score-perfect{% elif score.obj.game1 >= 200 %}score-normal{% else %}score-low{% endif %}">
+                                {{ score.obj.game1|default:'' }}
+                            </td>
+                            <td class="{% if score.obj.game2 == 300 %}score-perfect{% elif score.obj.game2 >= 200 %}score-normal{% else %}score-low{% endif %}">
+                                {{ score.obj.game2|default:'' }}
+                            </td>
+                            <td class="{% if score.obj.game3 == 300 %}score-perfect{% elif score.obj.game3 >= 200 %}score-normal{% else %}score-low{% endif %}">
+                                {{ score.obj.game3|default:'' }}
+                            </td>
+                            <td class="{% if score.obj.game4 == 300 %}score-perfect{% elif score.obj.game4 >= 200 %}score-normal{% else %}score-low{% endif %}">
+                                {{ score.obj.game4|default:'' }}
+                            </td>
+                            <td class="{% if score.obj.game5 == 300 %}score-perfect{% elif score.obj.game5 >= 200 %}score-normal{% else %}score-low{% endif %}">
+                                {{ score.obj.game5|default:'' }}
+                            </td>
+                            <td class="{% if score.obj.game6 == 300 %}score-perfect{% elif score.obj.game6 >= 200 %}score-normal{% else %}score-low{% endif %}">
+                                {{ score.obj.game6|default:'' }}
+                            </td>
+                            <td class="{% if score.obj.game7 == 300 %}score-perfect{% elif score.obj.game7 >= 200 %}score-normal{% else %}score-low{% endif %}">
+                                {{ score.obj.game7|default:'' }}
+                            </td>
+                            <td class="{% if score.obj.game8 == 300 %}score-perfect{% elif score.obj.game8 >= 200 %}score-normal{% else %}score-low{% endif %}">
+                                {{ score.obj.game8|default:'' }}
+                            </td>
+                            <td class="{% if score.obj.game9 == 300 %}score-perfect{% elif score.obj.game9 >= 200 %}score-normal{% else %}score-low{% endif %}">
+                                {{ score.obj.game9|default:'' }}
+                            </td>
+                            <td class="{% if score.obj.game10 == 300 %}score-perfect{% elif score.obj.game10 >= 200 %}score-normal{% else %}score-low{% endif %}">
+                                {{ score.obj.game10|default:'' }}
+                            </td>
+                            <td class="{% if score.obj.game11 == 300 %}score-perfect{% elif score.obj.game11 >= 200 %}score-normal{% else %}score-low{% endif %}">
+                                {{ score.obj.game11|default:'' }}
+                            </td>
+                            <td class="{% if score.obj.game12 == 300 %}score-perfect{% elif score.obj.game12 >= 200 %}score-normal{% else %}score-low{% endif %}">
+                                {{ score.obj.game12|default:'' }}
+                            </td>
+                            <td class="high-low-diff">
+                                {% if score.obj.game_high_low_diff is not None %}
+                                    {{ score.obj.game_high_low_diff }}
+                                {% else %}
+                                    -
+                                {% endif %}
+                            </td>
+                        </tr>
+                    </table>
+                </td>
+            </tr>
+        {% endfor %}
+    </table>
+
+    <!-- 女子B -->
+    <table id="female-b-table">
+        <tr>
+            <th class="header-place">PLACE</th>
+            <th class="header-face">FACE</th>
+            <th class="header-name">NAME</th>
+            <th class="header-total">TOTAL</th>
+        </tr>
+        {% for score in female_b_scores %}
+            {% if forloop.counter <= 8 %}
+                <tr class="top-8 main-row" data-id="female-b-{{ forloop.counter }}">
+            {% elif forloop.counter <= 30 %}
+                <tr class="mid-rank main-row" data-id="female-b-{{ forloop.counter }}">
+            {% else %}
+                <tr class="low-rank main-row" data-id="female-b-{{ forloop.counter }}">
+            {% endif %}
+                <td class="rank-column">{{ forloop.counter }}<span class="small-text">位</span></td>
+                <td class="face-column">
+                    <img src="/media/photos/default_avatar.png" alt="デフォルトアバター">
+                </td>
+                <td class="name-column {% if score.obj.name|length >= 5 %}small-name{% endif %}">
+                    {{ score.obj.name }}
+                    {% if score.obj.license_no|slice:":1" == "F" %}
+                        <span class="small-text">プロ</span><span class="shift-text">({{ score.obj.shift }})</span>
+                    {% endif %}
+                </td>
+                <td class="total-column">
+                    {{ score.obj.total }}<span class="small-text">pin</span>
+                    <span class="plus-minus">
+                        {% if score.diff >= 0 %}+{% endif %}{{ score.diff }}
+                    </span>
+                </td>
+            </tr>
+            <tr class="game-row" id="games-female-b-{{ forloop.counter }}">
+                <td colspan="4">
+                    <table class="inner-table">
+                        <tr>
+                            <td class="game-label">G1</td><td class="game-label">G2</td><td class="game-label">G3</td>
+                            <td class="game-label">G4</td><td class="game-label">G5</td><td class="game-label">G6</td>
+                            <td class="game-label">G7</td><td class="game-label">G8</td><td class="game-label">G9</td>
+                            <td class="game-label">G10</td><td class="game-label">G11</td><td class="game-label">G12</td>
+                            <td class="game-label">ローハイ</td>
+                        </tr>
+                        <tr>
+                            <td class="{% if score.obj.game1 == 300 %}score-perfect{% elif score.obj.game1 >= 200 %}score-normal{% else %}score-low{% endif %}">
+                                {{ score.obj.game1|default:'' }}
+                            </td>
+                            <td class="{% if score.obj.game2 == 300 %}score-perfect{% elif score.obj.game2 >= 200 %}score-normal{% else %}score-low{% endif %}">
+                                {{ score.obj.game2|default:'' }}
+                            </td>
+                            <td class="{% if score.obj.game3 == 300 %}score-perfect{% elif score.obj.game3 >= 200 %}score-normal{% else %}score-low{% endif %}">
+                                {{ score.obj.game3|default:'' }}
+                            </td>
+                            <td class="{% if score.obj.game4 == 300 %}score-perfect{% elif score.obj.game4 >= 200 %}score-normal{% else %}score-low{% endif %}">
+                                {{ score.obj.game4|default:'' }}
+                            </td>
+                            <td class="{% if score.obj.game5 == 300 %}score-perfect{% elif score.obj.game5 >= 200 %}score-normal{% else %}score-low{% endif %}">
+                                {{ score.obj.game5|default:'' }}
+                            </td>
+                            <td class="{% if score.obj.game6 == 300 %}score-perfect{% elif score.obj.game6 >= 200 %}score-normal{% else %}score-low{% endif %}">
+                                {{ score.obj.game6|default:'' }}
+                            </td>
+                            <td class="{% if score.obj.game7 == 300 %}score-perfect{% elif score.obj.game7 >= 200 %}score-normal{% else %}score-low{% endif %}">
+                                {{ score.obj.game7|default:'' }}
+                            </td>
+                            <td class="{% if score.obj.game8 == 300 %}score-perfect{% elif score.obj.game8 >= 200 %}score-normal{% else %}score-low{% endif %}">
+                                {{ score.obj.game8|default:'' }}
+                            </td>
+                            <td class="{% if score.obj.game9 == 300 %}score-perfect{% elif score.obj.game9 >= 200 %}score-normal{% else %}score-low{% endif %}">
+                                {{ score.obj.game9|default:'' }}
+                            </td>
+                            <td class="{% if score.obj.game10 == 300 %}score-perfect{% elif score.obj.game10 >= 200 %}score-normal{% else %}score-low{% endif %}">
+                                {{ score.obj.game10|default:'' }}
+                            </td>
+                            <td class="{% if score.obj.game11 == 300 %}score-perfect{% elif score.obj.game11 >= 200 %}score-normal{% else %}score-low{% endif %}">
+                                {{ score.obj.game11|default:'' }}
+                            </td>
+                            <td class="{% if score.obj.game12 == 300 %}score-perfect{% elif score.obj.game12 >= 200 %}score-normal{% else %}score-low{% endif %}">
+                                {{ score.obj.game12|default:'' }}
+                            </td>
+                            <td class="high-low-diff">
+                                {% if score.obj.game_high_low_diff is not None %}
+                                    {{ score.obj.game_high_low_diff }}
+                                {% else %}
+                                    -
+                                {% endif %}
+                            </td>
+                        </tr>
+                    </table>
+                </td>
+            </tr>
+        {% endfor %}
+    </table>
+
+    <!-- 女子合算 -->
+    <table id="female-all-table">
+        <tr>
+            <th class="header-place">PLACE</th>
+            <th class="header-face">FACE</th>
+            <th class="header-name">NAME</th>
+            <th class="header-total">TOTAL</th>
+        </tr>
+        {% for score in female_all_scores %}
+            {% if forloop.counter <= 8 %}
+                <tr class="top-8 main-row" data-id="female-all-{{ forloop.counter }}">
+            {% elif forloop.counter <= 30 %}
+                <tr class="mid-rank main-row" data-id="female-all-{{ forloop.counter }}">
+            {% else %}
+                <tr class="low-rank main-row" data-id="female-all-{{ forloop.counter }}">
+            {% endif %}
+                <td class="rank-column">{{ forloop.counter }}<span class="small-text">位</span></td>
+                <td class="face-column">
+                    <img src="/media/photos/default_avatar.png" alt="デフォルトアバター">
+                </td>
+                <td class="name-column {% if score.obj.name|length >= 5 %}small-name{% endif %}">
+                    {{ score.obj.name }}
+                    {% if score.obj.license_no|slice:":1" == "F" %}
+                        <span class="small-text">プロ</span><span class="shift-text">({{ score.obj.shift }})</span>
+                    {% endif %}
+                    {% if forloop.counter >= 2 and forloop.counter <= 8 %}
+                        <span class="diff-text">トップとの差 {{ score.top_diff }}pin</span>
+                    {% elif forloop.counter >= 9 and forloop.counter <= 30 %}
+                        <span class="diff-text">決勝ボーダーとの差 {{ score.final_border_diff }}pin</span>
+                    {% elif forloop.counter > 30 %}
+                        <span class="semi-diff-text">準決ボーダーとの差 {{ score.semi_border_diff }}pin</span>
+                    {% endif %}
+                </td>
+                <td class="total-column">
+                    {{ score.obj.total }}<span class="small-text">pin</span>
+                    <span class="plus-minus">
+                        {% if score.diff >= 0 %}+{% endif %}{{ score.diff }}
+                    </span>
+                </td>
+            </tr>
+            <tr class="game-row" id="games-female-all-{{ forloop.counter }}">
+                <td colspan="4">
+                    <table class="inner-table">
+                        <tr>
+                            <td class="game-label">G1</td><td class="game-label">G2</td><td class="game-label">G3</td>
+                            <td class="game-label">G4</td><td class="game-label">G5</td><td class="game-label">G6</td>
+                            <td class="game-label">G7</td><td class="game-label">G8</td><td class="game-label">G9</td>
+                            <td class="game-label">G10</td><td class="game-label">G11</td><td class="game-label">G12</td>
+                            <td class="game-label">ローハイ</td>
+                        </tr>
+                        <tr>
+                            <td class="{% if score.obj.game1 == 300 %}score-perfect{% elif score.obj.game1 >= 200 %}score-normal{% else %}score-low{% endif %}">
+                                {{ score.obj.game1|default:'' }}
+                            </td>
+                            <td class="{% if score.obj.game2 == 300 %}score-perfect{% elif score.obj.game2 >= 200 %}score-normal{% else %}score-low{% endif %}">
+                                {{ score.obj.game2|default:'' }}
+                            </td>
+                            <td class="{% if score.obj.game3 == 300 %}score-perfect{% elif score.obj.game3 >= 200 %}score-normal{% else %}score-low{% endif %}">
+                                {{ score.obj.game3|default:'' }}
+                            </td>
+                            <td class="{% if score.obj.game4 == 300 %}score-perfect{% elif score.obj.game4 >= 200 %}score-normal{% else %}score-low{% endif %}">
+                                {{ score.obj.game4|default:'' }}
+                            </td>
+                            <td class="{% if score.obj.game5 == 300 %}score-perfect{% elif score.obj.game5 >= 200 %}score-normal{% else %}score-low{% endif %}">
+                                {{ score.obj.game5|default:'' }}
+                            </td>
+                            <td class="{% if score.obj.game6 == 300 %}score-perfect{% elif score.obj.game6 >= 200 %}score-normal{% else %}score-low{% endif %}">
+                                {{ score.obj.game6|default:'' }}
+                            </td>
+                            <td class="{% if score.obj.game7 == 300 %}score-perfect{% elif score.obj.game7 >= 200 %}score-normal{% else %}score-low{% endif %}">
+                                {{ score.obj.game7|default:'' }}
+                            </td>
+                            <td class="{% if score.obj.game8 == 300 %}score-perfect{% elif score.obj.game8 >= 200 %}score-normal{% else %}score-low{% endif %}">
+                                {{ score.obj.game8|default:'' }}
+                            </td>
+                            <td class="{% if score.obj.game9 == 300 %}score-perfect{% elif score.obj.game9 >= 200 %}score-normal{% else %}score-low{% endif %}">
+                                {{ score.obj.game9|default:'' }}
+                            </td>
+                            <td class="{% if score.obj.game10 == 300 %}score-perfect{% elif score.obj.game10 >= 200 %}score-normal{% else %}score-low{% endif %}">
+                                {{ score.obj.game10|default:'' }}
+                            </td>
+                            <td class="{% if score.obj.game11 == 300 %}score-perfect{% elif score.obj.game11 >= 200 %}score-normal{% else %}score-low{% endif %}">
+                                {{ score.obj.game11|default:'' }}
+                            </td>
+                            <td class="{% if score.obj.game12 == 300 %}score-perfect{% elif score.obj.game12 >= 200 %}score-normal{% else %}score-low{% endif %}">
+                                {{ score.obj.game12|default:'' }}
+                            </td>
+                            <td class="high-low-diff">
+                                {% if score.obj.game_high_low_diff is not None %}
+                                    {{ score.obj.game_high_low_diff }}
+                                {% else %}
+                                    -
+                                {% endif %}
+                            </td>
+                        </tr>
+                    </table>
+                </td>
+            </tr>
+        {% endfor %}
+    </table>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const buttons = document.querySelectorAll('.tab-button');
+            const tables = document.querySelectorAll('table');
+
+            function setRowClickEvents() {
+                document.querySelectorAll('.main-row').forEach(row => {
+                    if (!row.dataset.listenerAdded) {
+                        row.addEventListener('click', (event) => {
+                            event.preventDefault();
+                            const id = row.getAttribute('data-id');
+                            const gameRow = document.getElementById(`games-${id}`);
+                            if (gameRow) {
+                                gameRow.classList.toggle('active');
+                            }
+                        });
+                        row.dataset.listenerAdded = 'true';
+                    }
+                });
+            }
+
+            setRowClickEvents();
+
+            buttons.forEach(button => {
+                button.addEventListener('click', () => {
+                    buttons.forEach(btn => btn.classList.remove('active'));
+                    tables.forEach(table => table.classList.remove('active'));
+                    button.classList.add('active');
+                    const activeTable = document.getElementById(`${button.dataset.tab}-table`);
+                    activeTable.classList.add('active');
+                    setRowClickEvents();
+                });
+            });
+        });
+    </script>
+</body>
+</html>

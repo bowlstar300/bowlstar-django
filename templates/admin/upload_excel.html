@@ -1,0 +1,12 @@
+<!-- templates/admin/upload_excel.html -->
+{% extends "admin/base_site.html" %}
+{% block content %}
+<h1>Excelファイルでスコアをアップロード</h1>
+<form method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+    <input type="file" name="excel_file" accept=".xlsx">
+    <button type="submit">アップロード</button>
+</form>
+<p>注意: 既存のスコアはすべて削除され、新しいデータに置き換えられます。</p>
+<a href="{% url 'admin:scores_score_changelist' %}">キャンセルして戻る</a>
+{% endblock %}
